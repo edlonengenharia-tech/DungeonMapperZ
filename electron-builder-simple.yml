@@ -1,0 +1,22 @@
+appId: com.dungeonmapper.app
+productName: Dungeon Mapper
+copyright: Copyright © 2026
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - dist/**/*
+  - electron/**/*
+  - package.json
+
+win:
+  target:
+    - target: portable
+      arch:
+        - x64
+  artifactName: ${productName}-Portable-${version}.exe
+
+portable:
+  artifactName: ${productName}-Portable-${version}.exe
