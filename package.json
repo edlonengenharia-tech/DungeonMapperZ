@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Create dungeons and battle maps for tabletop RPGs",
   "author": "Dungeon Mapper",
-  "main": "electron/main.js",
+  "main": "electron/main.cjs",
   "private": true,
   "type": "module",
   "scripts": {

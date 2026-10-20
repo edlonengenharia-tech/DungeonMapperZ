@@ -1,6 +1,6 @@
 # Dungeon Mapper - Guia de Instalação
 
-## ✅ Correções Aplicadas
+## Correções Aplicadas
 
 ### 1. Problema do "Limpar Mapa"
 - **Corrigido**: Modal de confirmação customizado substituiu o `confirm()` nativo
@@ -11,27 +11,35 @@
   - `version`: "1.0.0"
   - `description`: "Create dungeons and battle maps for tabletop RPGs"
   - `author`: "Dungeon Mapper"
-  - `main`: "electron/main.js"
+  - `main`: "electron/main.cjs"
 
-### 3. Scripts Simplificados
+### 3. Erro de ES Module
+- **Corrigido**: Arquivos do Electron renomeados de `.js` para `.cjs`
+- **Motivo**: O `package.json` tem `"type": "module"` e o Electron usa `require()` (CommonJS)
+- **Arquivos**:
+  - `electron/main.cjs`
+  - `electron/preload.cjs`
+  - `electron/main.dev.cjs`
+
+### 4. Scripts Simplificados
 - **Removidos**: Todos os scripts obsoletos com caracteres UTF-8
 - **Criados**: Scripts limpos usando apenas ASCII puro
 
-## 📦 Scripts Disponíveis
+## Scripts Disponiveis
 
 ### test.bat
-Testa o app sem gerar executável.
+Testa o app sem gerar executavel.
 ```
 Duplo clique em: test.bat
 ```
 
 ### build.bat
-Gera o executável Windows.
+Gera o executavel Windows.
 ```
 Duplo clique em: build.bat
 ```
 
-## 🚀 Como Gerar o Executável
+## Como Gerar o Executavel
 
 ### Passo 1: Testar o App
 ```bash
@@ -39,28 +47,28 @@ test.bat
 ```
 Se o app abrir corretamente, feche a janela.
 
-### Passo 2: Gerar o Executável
+### Passo 2: Gerar o Executavel
 ```bash
 build.bat
 ```
-O executável estará em `release/DungeonMapper-Portable-1.0.0.exe`
+O executavel estara em `release/DungeonMapper-Portable-1.0.0.exe`
 
-## 📋 Estrutura Final
+## Estrutura Final
 
 ```
 dungeon-mapper/
-├── build.bat                  # Gerar executável
+├── build.bat                  # Gerar executavel
 ├── test.bat                   # Testar app
-├── package.json               # Configuração (CORRIGIDO)
-├── electron-builder.yml       # Configuração do build
+├── package.json               # Configuracao (CORRIGIDO)
+├── electron-builder.yml       # Configuracao do build
 ├── electron/
-│   ├── main.js               # Processo principal
-│   ├── main.dev.js           # Modo dev
-│   └── preload.js            # Preload script
+│   ├── main.cjs              # Processo principal (CommonJS)
+│   ├── main.dev.cjs          # Modo dev (CommonJS)
+│   └── preload.cjs           # Preload script (CommonJS)
 ├── src/
 │   ├── App.tsx               # App principal
 │   ├── components/
-│   │   ├── ConfirmModal.tsx  # Modal de confirmação (NOVO)
+│   │   ├── ConfirmModal.tsx  # Modal de confirmacao (NOVO)
 │   │   ├── Canvas.tsx        # Canvas do mapa
 │   │   ├── Toolbar.tsx       # Barra de ferramentas
 │   │   └── ...               # Outros componentes
@@ -70,32 +78,32 @@ dungeon-mapper/
 └── dist/                     # Build do React (gerado)
 ```
 
-## 🎯 Funcionalidades Implementadas
+## Funcionalidades Implementadas
 
 ### Ferramentas de Desenho
-- ✏️ Lápis (P)
-- 🧹 Borracha (E)
-- 🪣 Preenchimento (F)
-- ⬜ Retângulo com cantos arredondados (R)
-- 🎯 Token (T)
-- 🌲 Stamp (S)
-- ✍️ Texto (X)
-- 💡 Luz (L)
+- Lapiz (P)
+- Borracha (E)
+- Preenchimento (F)
+- Retangulo com cantos arredondados (R)
+- Token (T)
+- Stamp (S)
+- Texto (X)
+- Luz (L)
 
-### Recursos Avançados
-- 🎲 Gerador de Masmorra Aleatória (N)
-- 💡 Sistema de Iluminação com raios brilhantes/dim
-- 📤 Exportação UVTT (Universal VTT)
-- 🖼️ Galeria de Mapas
-- 🔒 Bloqueio de Objetos
-- ↩️ Undo/Redo (Ctrl+Z / Ctrl+Y)
-- 💾 Salvar/Carregar (Ctrl+S)
+### Recursos Avancados
+- Gerador de Masmorra Aleatoria (N)
+- Sistema de Iluminacao com raios brilhantes/dim
+- Exportacao UVTT (Universal VTT)
+- Galeria de Mapas
+- Bloqueio de Objetos
+- Undo/Redo (Ctrl+Z / Ctrl+Y)
+- Salvar/Carregar (Ctrl+S)
 
 ### Atalhos de Teclado
-- P: Lápis
+- P: Lapiz
 - E: Borracha
 - F: Preencher
-- R: Retângulo
+- R: Retangulo
 - T: Token
 - S: Stamp
 - X: Texto
@@ -106,50 +114,53 @@ dungeon-mapper/
 - Ctrl+Y: Refazer
 - Ctrl+S: Salvar
 
-## 🔧 Comandos npm
+## Comandos npm
 
 ```bash
-# Instalar dependências
+# Instalar dependencias
 npm install
 
 # Iniciar servidor de desenvolvimento
 npm run dev
 
-# Build para produção
+# Build para producao
 npm run build
 
 # Testar com Electron
 npm run electron:dev
 
-# Gerar executável
+# Gerar executavel
 npm run electron:build
 ```
 
-## 📝 Notas Importantes
+## Notas Importantes
 
 1. **Primeiro build demora**: O Electron baixa ~150MB na primeira vez
-2. **Espaço necessário**: 2GB+ de espaço livre
-3. **Node.js**: Versão 18+ obrigatória
-4. **Internet**: Necessária apenas no primeiro build
+2. **Espaco necessario**: 2GB+ de espaco livre
+3. **Node.js**: Versao 18+ obrigatoria
+4. **Internet**: Necessaria apenas no primeiro build
 
-## 🐛 Solução de Problemas
+## Solucao de Problemas
+
+### "require is not defined in ES module scope"
+**CORRIGIDO**: Arquivos do Electron renomeados para `.cjs`
 
 ### "version is missed in package.json"
-✅ **CORRIGIDO**: Campos adicionados ao package.json
+**CORRIGIDO**: Campos adicionados ao package.json
 
-### "Limpar mapa não funciona"
-✅ **CORRIGIDO**: Modal customizado implementado
+### "Limpar mapa nao funciona"
+**CORRIGIDO**: Modal customizado implementado
 
 ### "Caracteres estranhos nos scripts"
-✅ **CORRIGIDO**: Scripts recriados com ASCII puro
+**CORRIGIDO**: Scripts recriados com ASCII puro
 
-### App não abre
+### App nao abre
 ```bash
 npm run build
 test.bat
 ```
 
-### Executável não gera
+### Executavel nao gera
 ```bash
 # Limpar e reinstalar
 rmdir /s /q node_modules
@@ -159,11 +170,11 @@ npm install --save-dev electron electron-builder
 build.bat
 ```
 
-## 📚 Documentação
+## Documentacao
 
-- `README.md` - Instruções gerais
-- Este arquivo - Guia de instalação e correções
+- `README.md` - Instrucoes gerais
+- Este arquivo - Guia de instalacao e correcoes
 
 ---
 
-**Status**: ✅ Todos os problemas corrigidos e testado com sucesso!
+**Status**: Todos os problemas corrigidos e testado com sucesso!

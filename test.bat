@@ -53,7 +53,7 @@ echo.
 echo Close the window when done testing.
 echo.
 
-npx electron electron/main.js
+npx electron electron/main.cjs
 
 if %ERRORLEVEL% NEQ 0 (
     echo.

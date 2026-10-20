@@ -12,14 +12,14 @@ test.bat
 ```
 
 Isso vai:
-- Instalar dependências
+- Instalar dependencias
 - Instalar Electron
 - Buildar o app
 - Abrir o app em uma janela
 
-Se o app abrir corretamente, feche a janela e continue para o próximo passo.
+Se o app abrir corretamente, feche a janela e continue para o proximo passo.
 
-### 2. Gerar o Executável
+### 2. Gerar o Executavel
 
 Execute:
 ```
@@ -27,39 +27,39 @@ build.bat
 ```
 
 Isso vai:
-- Instalar todas as dependências
+- Instalar todas as dependencias
 - Buildar o app React
-- Gerar o executável Windows
+- Gerar o executavel Windows
 
-O executável estará na pasta `release/`.
+O executavel estara na pasta `release/`.
 
 ## Requisitos
 
 - Node.js 18+ (https://nodejs.org/)
 - npm (vem com o Node.js)
-- 2GB de espaço em disco
-- Conexão com internet (apenas no primeiro build)
+- 2GB de espaco em disco
+- Conexao com internet (apenas no primeiro build)
 
 ## Desenvolvimento
 
 ```bash
-# Instalar dependências
+# Instalar dependencias
 npm install
 
 # Iniciar servidor de desenvolvimento
 npm run dev
 
-# Build para produção
+# Build para producao
 npm run build
 
 # Testar com Electron
 npm run electron:dev
 
-# Gerar executável
+# Gerar executavel
 npm run electron:build
 ```
 
-## Solução de Problemas
+## Solucao de Problemas
 
 ### "Node.js not found"
 Instale o Node.js em https://nodejs.org/
@@ -69,32 +69,35 @@ Execute `npm run build` para ver os erros
 
 ### "Executable not generated"
 1. Execute `test.bat` primeiro para verificar se o app funciona
-2. Verifique se tem 2GB+ de espaço livre
+2. Verifique se tem 2GB+ de espaco livre
 3. Tente executar como Administrador
 
 ### "App shows blank screen"
 Execute `npm run build` para rebuildar o app
 
+### "require is not defined in ES module scope"
+Os arquivos do Electron foram renomeados para `.cjs` para resolver este problema.
+
 ## Estrutura do Projeto
 
 ```
-├── build.bat              # Gerar executável
+├── build.bat              # Gerar executavel
 ├── test.bat               # Testar app
-├── package.json           # Dependências e scripts
-├── electron-builder.yml   # Configuração do build
+├── package.json           # Dependencias e scripts
+├── electron-builder.yml   # Configuracao do build
 ├── electron/
-│   ├── main.js           # Processo principal do Electron
-│   ├── main.dev.js       # Modo desenvolvimento
-│   └── preload.js        # Script de preload
+│   ├── main.cjs          # Processo principal do Electron (CommonJS)
+│   ├── main.dev.cjs      # Modo desenvolvimento (CommonJS)
+│   └── preload.cjs       # Script de preload (CommonJS)
 ├── src/
 │   ├── App.tsx           # Componente principal
 │   ├── components/       # Componentes React
 │   ├── types.ts          # Tipos TypeScript
-│   └── utils/            # Funções utilitárias
+│   └── utils/            # Funcoes utilitarias
 ├── dist/                 # Build do React (gerado)
-└── release/              # Executável (gerado)
+└── release/              # Executavel (gerado)
 ```
 
-## Licença
+## Licenca
 
 MIT

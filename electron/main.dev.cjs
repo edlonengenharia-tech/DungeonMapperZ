@@ -12,7 +12,7 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preload.cjs'),
     },
     title: 'Dungeon Mapper (Dev)',
     backgroundColor: '#0f0f1a',
