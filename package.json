@@ -1,11 +1,17 @@
 {
-  "name": "sandbox-workspace",
+  "name": "dungeon-mapper",
+  "version": "1.0.0",
+  "description": "Create dungeons and battle maps for tabletop RPGs",
+  "author": "Dungeon Mapper",
+  "main": "electron/main.js",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "electron:dev": "vite build && electron .",
+    "electron:build": "vite build && electron-builder --win portable"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",
