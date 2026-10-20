@@ -1,9 +1,13 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
-import { TileType, Token, TILE_TYPES } from '../types';
+import { TileType, Token, TextObject, LightSource, StampItem, TILE_TYPES } from '../types';
+import type { StampSettings } from './StampPanel';
 
 interface CanvasProps {
   grid: (string | null)[][];
   tokens: Token[];
+  texts: TextObject[];
+  lights: LightSource[];
+  stamps: StampItem[];
   selectedTile: TileType;
   tool: string;
   gridSize: number;
@@ -12,13 +16,22 @@ interface CanvasProps {
   onTokenMove: (tokenId: string, x: number, y: number) => void;
   onAddToken: (x: number, y: number) => void;
   onFloodFill: (row: number, col: number) => void;
-  onRectDraw: (startRow: number, startCol: number, endRow: number, endCol: number) => void;
+  onRectDraw: (startRow: number, startCol: number, endRow: number, endCol: number, cornerRadius?: number) => void;
+  onAddText: (x: number, y: number) => void;
+  onAddLight: (x: number, y: number) => void;
+  onAddStamp: (x: number, y: number) => void;
   showGrid: boolean;
+  lightMode: boolean;
+  cornerRadius: number;
+  stampSettings: StampSettings;
 }
 
 export default function Canvas({
   grid,
   tokens,
+  texts,
+  lights,
+  stamps,
   selectedTile,
   tool,
   gridSize,
@@ -28,7 +41,13 @@ export default function Canvas({
   onAddToken,
   onFloodFill,
   onRectDraw,
+  onAddText,
+  onAddLight,
+  onAddStamp,
   showGrid,
+  lightMode,
+  cornerRadius,
+  stampSettings,
 }: CanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -40,6 +59,7 @@ export default function Canvas({
   const [scale, setScale] = useState(1);
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [stampCounter, setStampCounter] = useState(0);
 
   const rows = grid.length;
   const cols = grid[0]?.length || 0;
@@ -68,7 +88,6 @@ export default function Canvas({
         const y = r * cellSize;
         const tileId = grid[r][c];
 
-        // Background
         ctx.fillStyle = '#1a1a2e';
         ctx.fillRect(x, y, cellSize, cellSize);
 
@@ -77,11 +96,7 @@ export default function Canvas({
           if (tile) {
             ctx.fillStyle = tile.color;
             ctx.fillRect(x, y, cellSize, cellSize);
-
-            // Draw patterns
             drawPattern(ctx, tile, x, y, cellSize);
-
-            // Draw border
             if (tile.borderColor) {
               ctx.strokeStyle = tile.borderColor;
               ctx.lineWidth = 2;
@@ -110,29 +125,64 @@ export default function Canvas({
       }
     }
 
+    // Draw stamps
+    stamps.forEach(stamp => {
+      const x = stamp.x * cellSize + cellSize / 2;
+      const y = stamp.y * cellSize + cellSize / 2;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate((stamp.rotation * Math.PI) / 180);
+      ctx.globalAlpha = stamp.opacity;
+      ctx.font = `${stamp.size * scale}px serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(stamp.symbol, 0, 0);
+      ctx.restore();
+    });
+
+    // Draw texts
+    texts.forEach(text => {
+      const x = text.x * cellSize + cellSize / 2;
+      const y = text.y * cellSize + cellSize / 2;
+      ctx.save();
+      ctx.font = `bold ${text.fontSize * scale}px sans-serif`;
+      ctx.fillStyle = text.color;
+      ctx.textAlign = text.align;
+      ctx.textBaseline = 'middle';
+      if (text.shadow) {
+        ctx.shadowColor = 'rgba(0,0,0,0.8)';
+        ctx.shadowBlur = 4 * scale;
+        ctx.shadowOffsetX = 2 * scale;
+        ctx.shadowOffsetY = 2 * scale;
+      }
+      ctx.fillText(text.text, x, y);
+      ctx.restore();
+    });
+
     // Draw rectangle preview
     if (tool === 'rect' && rectStart && rectEnd) {
       const minR = Math.min(rectStart.row, rectEnd.row);
       const maxR = Math.max(rectStart.row, rectEnd.row);
       const minC = Math.min(rectStart.col, rectEnd.col);
       const maxC = Math.max(rectStart.col, rectEnd.col);
+      const cr = cornerRadius * scale;
 
       ctx.fillStyle = selectedTile.color + '66';
-      ctx.fillRect(
-        minC * cellSize,
-        minR * cellSize,
-        (maxC - minC + 1) * cellSize,
-        (maxR - minR + 1) * cellSize
-      );
+      if (cr > 0) {
+        drawRoundedRect(ctx, minC * cellSize, minR * cellSize, (maxC - minC + 1) * cellSize, (maxR - minR + 1) * cellSize, cr);
+        ctx.fill();
+      } else {
+        ctx.fillRect(minC * cellSize, minR * cellSize, (maxC - minC + 1) * cellSize, (maxR - minR + 1) * cellSize);
+      }
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 2;
       ctx.setLineDash([5, 5]);
-      ctx.strokeRect(
-        minC * cellSize,
-        minR * cellSize,
-        (maxC - minC + 1) * cellSize,
-        (maxR - minR + 1) * cellSize
-      );
+      if (cr > 0) {
+        drawRoundedRect(ctx, minC * cellSize, minR * cellSize, (maxC - minC + 1) * cellSize, (maxR - minR + 1) * cellSize, cr);
+        ctx.stroke();
+      } else {
+        ctx.strokeRect(minC * cellSize, minR * cellSize, (maxC - minC + 1) * cellSize, (maxR - minR + 1) * cellSize);
+      }
       ctx.setLineDash([]);
     }
 
@@ -147,7 +197,6 @@ export default function Canvas({
       ctx.shadowBlur = 4;
       ctx.shadowOffsetX = 2;
       ctx.shadowOffsetY = 2;
-
       ctx.fillStyle = token.color;
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 2;
@@ -169,10 +218,8 @@ export default function Canvas({
         ctx.fill();
         ctx.stroke();
       }
-
       ctx.restore();
 
-      // Draw label
       if (token.label) {
         ctx.fillStyle = '#ffffff';
         ctx.font = `bold ${Math.max(10, cellSize * 0.25)}px sans-serif`;
@@ -180,10 +227,92 @@ export default function Canvas({
         ctx.textBaseline = 'middle';
         ctx.fillText(token.label, x, y);
       }
+
+      if (token.locked) {
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.font = `${cellSize * 0.2}px sans-serif`;
+        ctx.fillText('🔒', x + radius * 0.7, y - radius * 0.7);
+      }
     });
 
+    // Draw light sources
+    lights.forEach(light => {
+      const x = light.x * cellSize + cellSize / 2;
+      const y = light.y * cellSize + cellSize / 2;
+
+      if (lightMode) {
+        // Draw dim radius
+        const dimRadius = light.dimRadius * cellSize;
+        const gradient = ctx.createRadialGradient(x, y, 0, x, y, dimRadius);
+        gradient.addColorStop(0, light.color + '40');
+        gradient.addColorStop(light.brightRadius / light.dimRadius, light.color + '20');
+        gradient.addColorStop(1, 'transparent');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(x, y, dimRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw bright radius
+        const brightRadius = light.brightRadius * cellSize;
+        const brightGradient = ctx.createRadialGradient(x, y, 0, x, y, brightRadius);
+        brightGradient.addColorStop(0, light.color + '60');
+        brightGradient.addColorStop(1, light.color + '10');
+        ctx.fillStyle = brightGradient;
+        ctx.beginPath();
+        ctx.arc(x, y, brightRadius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Draw light icon
+      ctx.fillStyle = light.color;
+      ctx.beginPath();
+      ctx.arc(x, y, cellSize * 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Rays
+      for (let i = 0; i < 8; i++) {
+        const angle = (i * Math.PI * 2) / 8;
+        const innerR = cellSize * 0.25;
+        const outerR = cellSize * 0.35;
+        ctx.beginPath();
+        ctx.moveTo(x + Math.cos(angle) * innerR, y + Math.sin(angle) * innerR);
+        ctx.lineTo(x + Math.cos(angle) * outerR, y + Math.sin(angle) * outerR);
+        ctx.strokeStyle = light.color + '80';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+    });
+
+    // Light mode overlay - darken unlit areas
+    if (lightMode && lights.length > 0) {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.fillRect(0, 0, cols * cellSize, rows * cellSize);
+
+      // Cut out lit areas
+      ctx.globalCompositeOperation = 'destination-out';
+      lights.forEach(light => {
+        const x = light.x * cellSize + cellSize / 2;
+        const y = light.y * cellSize + cellSize / 2;
+        const dimRadius = light.dimRadius * cellSize;
+        const brightRadius = light.brightRadius * cellSize;
+
+        const gradient = ctx.createRadialGradient(x, y, 0, x, y, dimRadius);
+        gradient.addColorStop(0, 'rgba(0,0,0,1)');
+        gradient.addColorStop(brightRadius / dimRadius, 'rgba(0,0,0,0.5)');
+        gradient.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(x, y, dimRadius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
     ctx.restore();
-  }, [grid, tokens, gridSize, scale, offset, showGrid, rectStart, rectEnd, tool, selectedTile, rows, cols]);
+  }, [grid, tokens, texts, lights, stamps, gridSize, scale, offset, showGrid, rectStart, rectEnd, tool, selectedTile, lightMode, cornerRadius, rows, cols]);
 
   useEffect(() => {
     draw();
@@ -194,6 +323,21 @@ export default function Canvas({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [draw]);
+
+  function drawRoundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+    const radius = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + w - radius, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+    ctx.lineTo(x + w, y + h - radius);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+    ctx.lineTo(x + radius, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+  }
 
   function drawPattern(ctx: CanvasRenderingContext2D, tile: TileType, x: number, y: number, size: number) {
     ctx.save();
@@ -301,7 +445,6 @@ export default function Canvas({
     const x = e.clientX - rect.left - offset.x;
     const y = e.clientY - rect.top - offset.y;
     const cellSize = gridSize * scale;
-
     for (const token of tokens) {
       const tx = token.x * cellSize + cellSize / 2;
       const ty = token.y * cellSize + cellSize / 2;
@@ -324,9 +467,9 @@ export default function Canvas({
 
     if (tool === 'token') {
       const token = getTokenAt(e);
-      if (token) {
+      if (token && !token.locked) {
         setDragToken(token.id);
-      } else {
+      } else if (!token) {
         onAddToken(cell.col, cell.row);
       }
       return;
@@ -343,24 +486,36 @@ export default function Canvas({
       return;
     }
 
+    if (tool === 'text') {
+      onAddText(cell.col, cell.row);
+      return;
+    }
+
+    if (tool === 'light') {
+      onAddLight(cell.col, cell.row);
+      return;
+    }
+
+    if (tool === 'stamp') {
+      onAddStamp(cell.col, cell.row);
+      setStampCounter(0);
+      setIsDragging(true);
+      return;
+    }
+
     setIsDragging(true);
     onCellChange(cell.row, cell.col);
   }
 
   function handleMouseMove(e: React.MouseEvent) {
     if (isPanning) {
-      setOffset({
-        x: e.clientX - panStart.x,
-        y: e.clientY - panStart.y,
-      });
+      setOffset({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
       return;
     }
 
     if (dragToken) {
       const cell = getCellFromEvent(e);
-      if (cell) {
-        onTokenMove(dragToken, cell.col, cell.row);
-      }
+      if (cell) onTokenMove(dragToken, cell.col, cell.row);
       return;
     }
 
@@ -372,29 +527,37 @@ export default function Canvas({
       return;
     }
 
+    if (tool === 'stamp' && isDragging) {
+      setStampCounter(prev => {
+        const next = prev + 1;
+        if (next >= stampSettings.repeatSpeed) {
+          onAddStamp(cell.col, cell.row);
+          return 0;
+        }
+        return next;
+      });
+      return;
+    }
+
     if (isDragging) {
       onCellDrag(cell.row, cell.col);
     }
   }
 
   function handleMouseUp(e: React.MouseEvent) {
-    if (isPanning) {
-      setIsPanning(false);
-      return;
-    }
-
-    if (dragToken) {
-      setDragToken(null);
-      return;
-    }
+    if (isPanning) { setIsPanning(false); return; }
+    if (dragToken) { setDragToken(null); return; }
 
     if (tool === 'rect' && rectStart) {
       const cell = getCellFromEvent(e);
-      if (cell) {
-        onRectDraw(rectStart.row, rectStart.col, cell.row, cell.col);
-      }
+      if (cell) onRectDraw(rectStart.row, rectStart.col, cell.row, cell.col, cornerRadius);
       setRectStart(null);
       setRectEnd(null);
+      return;
+    }
+
+    if (tool === 'stamp') {
+      setIsDragging(false);
       return;
     }
 
@@ -414,6 +577,9 @@ export default function Canvas({
         tool === 'token' ? 'cursor-pointer' :
         tool === 'fill' ? 'cursor-cell' :
         tool === 'eraser' ? 'cursor-not-allowed' :
+        tool === 'text' ? 'cursor-text' :
+        tool === 'light' ? 'cursor-crosshair' :
+        tool === 'stamp' ? 'cursor-copy' :
         'cursor-crosshair'
       }`}
     >
