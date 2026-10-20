@@ -9,6 +9,7 @@ import ShowcaseModal from './components/ShowcaseModal';
 import LightingPanel from './components/LightingPanel';
 import StampPanel, { StampSettings } from './components/StampPanel';
 import TextPanel from './components/TextPanel';
+import ConfirmModal from './components/ConfirmModal';
 import { Tool, TileType, Token, TextObject, LightSource, StampItem, TILE_TYPES, TOKEN_COLORS, LIGHT_PRESETS } from './types';
 
 interface TokenSettings {
@@ -38,6 +39,7 @@ export default function App() {
   const [showMapSize, setShowMapSize] = useState(false);
   const [showRandomDungeon, setShowRandomDungeon] = useState(false);
   const [showShowcase, setShowShowcase] = useState(false);
+  const [showConfirmClear, setShowConfirmClear] = useState(false);
   const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
   const [selectedLightId, setSelectedLightId] = useState<string | null>(null);
   const [selectedTextId, setSelectedTextId] = useState<string | null>(null);
@@ -312,15 +314,18 @@ export default function App() {
   }, []);
 
   const handleClear = useCallback(() => {
-    if (confirm('Tem certeza que deseja limpar todo o mapa?')) {
-      const newGrid = createEmptyGrid(grid[0].length, grid.length);
-      setGrid(newGrid);
-      setTokens([]);
-      setTexts([]);
-      setLights([]);
-      setStamps([]);
-      pushHistory(newGrid);
-    }
+    setShowConfirmClear(true);
+  }, []);
+
+  const confirmClear = useCallback(() => {
+    const newGrid = createEmptyGrid(grid[0].length, grid.length);
+    setGrid(newGrid);
+    setTokens([]);
+    setTexts([]);
+    setLights([]);
+    setStamps([]);
+    pushHistory(newGrid);
+    setShowConfirmClear(false);
   }, [grid, pushHistory]);
 
   const handleResize = useCallback((width: number, height: number) => {
@@ -579,6 +584,16 @@ export default function App() {
         isOpen={showShowcase}
         onClose={() => setShowShowcase(false)}
         onLoadMap={handleLoadShowcaseMap}
+      />
+      <ConfirmModal
+        isOpen={showConfirmClear}
+        title="Limpar Mapa"
+        message="Tem certeza que deseja limpar todo o mapa? Esta ação não pode ser desfeita."
+        onConfirm={confirmClear}
+        onCancel={() => setShowConfirmClear(false)}
+        confirmText="Limpar Tudo"
+        cancelText="Cancelar"
+        danger={true}
       />
 
       <input
